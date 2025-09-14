@@ -388,9 +388,9 @@
 <style id="injected-hide-hint">#secretPoem .hint{display:none !important;}</style>
   <!-- Custom audio player styles for the persistent bottom-left dock -->
   <style id="audio-player-styles">
-    /* Hide the old compact audio dock */
+    /* Hide the old compact audio dock to avoid duplicate players */
     #audioDock{ display:none !important; }
-    /* Dock container */
+    /* Nickelodeon Orange audio dock container */
     #audioDock2{
       position:fixed;
       left:calc(8px + env(safe-area-inset-left));
@@ -407,16 +407,46 @@
       -webkit-user-select:none;
       user-select:none;
     }
-    /* Hide track buttons and sliders when collapsed */
-    #audioDock2.collapsed .ad-wrap{
-      display:none;
+    /* Expand/Collapse toggle button styling (Bergamot) */
+    .ad-toggle{
+      width:42px;
+      height:42px;
+      min-width:42px;
+      border-radius:50%;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:22px;
+      line-height:1;
+      border:0;
+      cursor:pointer;
+      /* Use Bergamot fill for the toggle button */
+      background:#FFA64D;
+      box-shadow:0 2px 6px rgba(0,0,0,.25);
+      transition:transform .06s ease, box-shadow .2s ease;
     }
-    #audioDock2.collapsed .ad-vol{
-      display:none;
+    .ad-toggle:active{ transform:translateY(1px); }
+
+    /* Play/Pause main button styling (Jinn Flame Orange) */
+    .ad-play{
+      width:42px;
+      height:42px;
+      min-width:42px;
+      border-radius:50%;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:22px;
+      line-height:1;
+      border:0;
+      cursor:pointer;
+      /* Jinn Flame Orange fill */
+      background:#F88E10;
+      box-shadow:0 2px 6px rgba(0,0,0,.25);
+      transition:transform .06s ease, box-shadow .2s ease;
     }
-    /* Generic button styles */
-    .ad-toggle,
-    .ad-play,
+    .ad-play:active{ transform:translateY(1px); }
+    /* Track buttons */
     .ad-btn{
       width:42px;
       height:42px;
@@ -429,34 +459,20 @@
       line-height:1;
       border:0;
       cursor:pointer;
-      box-shadow:0 2px 6px rgba(0,0,0,.25);
-      transition:transform .06s ease, box-shadow .2s ease;
-    }
-    /* Expand/collapse toggle uses Bergamot fill */
-    .ad-toggle{
-      background:#FFA64D;
-    }
-    /* Play/Pause button uses Jinn Flame */
-    .ad-play{
-      background:#F88E10;
-    }
-    /* Track buttons use saffron fill */
-    .ad-btn{
+      /* Use saffron fill for track buttons */
       background:#F4C430;
+      box-shadow:0 2px 6px rgba(0,0,0,.25);
+      transition:transform .06s ease, box-shadow .2s ease, opacity .15s ease;
     }
-    .ad-toggle:active,
-    .ad-play:active,
-    .ad-btn:active{
-      transform:translateY(1px);
-    }
+    .ad-btn:active{ transform:translateY(1px); }
     .ad-btn.active{
       outline:2px solid rgba(255,255,255,.85);
       box-shadow:0 4px 14px rgba(0,0,0,.35), 0 0 0 2px #ffffff inset;
       background:#fdfdfd;
     }
-    /* Positioning wrapper for volume popover */
+    /* Wrapper for volume slider popovers */
     #audioDock2 .ad-wrap{ position:relative; }
-    /* Volume popover */
+    /* Volume slider container */
     .ad-vol{
       position:absolute;
       bottom:58px;
@@ -467,8 +483,6 @@
       border:1px solid rgba(255,255,255,.2);
       box-shadow:0 10px 24px rgba(0,0,0,.45);
       display:none;
-      left:50%;
-      transform:translateX(-50%);
     }
     .ad-vol.visible{ display:block; }
     .ad-vol label{
@@ -481,8 +495,8 @@
     }
     /* Vertical range slider styling */
     .ad-vol input[type="range"]{
-      writing-mode:bt-lr;
-      -webkit-appearance:slider-vertical;
+      writing-mode: bt-lr;
+      -webkit-appearance: slider-vertical;
       width:30px;
       height:110px;
       padding:0;
@@ -490,11 +504,11 @@
       background:transparent;
     }
     .ad-vol input[type="range"]::-webkit-slider-thumb{
-      -webkit-appearance:none;
+      -webkit-appearance: none;
       width:18px;
       height:18px;
       border-radius:50%;
-      background:#FFA64D;
+      background:#FF6600;
       border:1px solid rgba(0,0,0,.35);
       box-shadow:0 1px 4px rgba(0,0,0,.35);
     }
@@ -508,7 +522,7 @@
       width:18px;
       height:18px;
       border-radius:50%;
-      background:#FFA64D;
+      background:#FF6600;
       border:1px solid rgba(0,0,0,.35);
     }
     .ad-vol input[type="range"]::-moz-range-track{
@@ -517,14 +531,23 @@
       border-radius:999px;
       border:0;
     }
-    /* Pulse animation for toggle */
+
+    /* Pulse animation for the toggle when expanded */
     @keyframes pulseToggle{
-      0%{ box-shadow:0 0 0 0 rgba(255,166,77,.5); }
-      50%{ box-shadow:0 0 0 6px rgba(255,166,77,0); }
-      100%{ box-shadow:0 0 0 0 rgba(255,166,77,.5); }
+      0%   { box-shadow:0 0 0 0 rgba(255,166,77,.5); }
+      50%  { box-shadow:0 0 0 6px rgba(255,166,77,0); }
+      100% { box-shadow:0 0 0 0 rgba(255,166,77,.5); }
     }
+    /* Apply pulse animation to the toggle when the dock is expanded */
     #audioDock2:not(.collapsed) #adToggle{
       animation:pulseToggle 2s infinite;
+    }
+    /* Hide track buttons and volume sliders when collapsed */
+    #audioDock2.collapsed .ad-wrap{
+      display:none;
+    }
+    #audioDock2.collapsed .ad-vol{
+      display:none;
     }
   </style>
 
@@ -576,8 +599,10 @@
 
 <!-- Persistent audio player (Nickelodeon orange) anchored bottom-left. Each track toggles between a sprout emoji and its playing icon. A vertical volume slider appears while active. -->
 <div id="audioDock2" role="group" aria-label="Audio Player" class="collapsed">
+  <!-- Expand/Collapse button -->
   <button class="ad-toggle" id="adToggle" title="Expand/Collapse">🟠</button>
-  <button class="ad-play"   id="adPlay"   title="Play/Pause">▶</button>
+  <!-- Play/Pause button -->
+  <button class="ad-play" id="adPlay" title="Play/Pause">▶</button>
   <!-- Track 1: Sparkle ✨ -->
   <div class="ad-wrap">
     <button class="ad-btn" data-track="sparkle" title="Sparkle ✨">🌱</button>
@@ -610,7 +635,7 @@
       <input type="range" min="0" max="1" step="0.01" value="0.75"/>
     </div>
   </div>
-  <!-- Hidden audio elements -->
+  <!-- Hidden audio elements (provide your own sources) -->
   <audio id="aud_sparkle" preload="metadata" playsinline src="media/sparkle.mp3"></audio>
   <audio id="aud_orange"  preload="metadata" playsinline src="media/orange.mp3"></audio>
   <audio id="aud_autumn"  preload="metadata" playsinline src="media/autumn.mp3"></audio>
@@ -2305,32 +2330,31 @@ drawPreview();
 })();
 </script>
 
-  <!-- Audio player logic: Storm-only autoplay with WebAudio gain sliders -->
+  <!-- Audio player logic: storm-only autoplay, WebAudio gain nodes, and play/pause controls. -->
   <script>
   /* Audio dock — Storm-only autoplay, iOS-safe unlock, WebAudio gain sliders */
   (function(){
-    // Track definitions: ambient storm can layer; others are melodic/exclusive
+    // Define track metadata: Storm is ambient (can layer); others are melodic (exclusive)
     const TRACKS = {
       sparkle:{ on:'✨', el:'aud_sparkle', group:'melodic' },
       orange: { on:'🍊', el:'aud_orange',  group:'melodic' },
       autumn: { on:'🍂', el:'aud_autumn',  group:'melodic' },
       storm:  { on:'⛈️', el:'aud_storm',   group:'ambient' }
     };
-    const DOCK = document.getElementById('audioDock2');
+    const DOCK   = document.getElementById('audioDock2');
     const TOGGLE = document.getElementById('adToggle');
-    const PLAY = document.getElementById('adPlay');
-    let AC = null;
-    const SOURCES = {};
-    const GAINS = {};
-    const ACTIVE = new Set();
-    let unlocked = false;
-
-    // Element helpers without optional chaining (better compatibility)
-    function btn(name){ return DOCK ? DOCK.querySelector('.ad-btn[data-track="'+name+'"]') : null; }
-    function vol(name){ return DOCK ? DOCK.querySelector('.ad-vol[data-for="'+name+'"]') : null; }
-    function aud(name){ return document.getElementById(TRACKS[name].el); }
-
-    // Ensure a single AudioContext
+    const PLAY   = document.getElementById('adPlay');
+    // State
+    let AC = null;                 // Web Audio API context
+    const SOURCES = {};            // Map of track name -> MediaElementSource
+    const GAINS   = {};            // Map of track name -> GainNode
+    const ACTIVE  = new Set();     // Currently selected tracks
+    let unlocked  = false;         // Has the audio context been unlocked by user gesture?
+    // Helper selectors
+    const btn = n => DOCK?.querySelector(`.ad-btn[data-track="${n}"]`);
+    const vol = n => DOCK?.querySelector(`.ad-vol[data-for="${n}"]`);
+    const aud = n => document.getElementById(TRACKS[n].el);
+    // Create or return the AudioContext
     function ensureAC(){
       if(AC) return AC;
       const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -2338,197 +2362,165 @@ drawPreview();
       AC = new Ctx();
       return AC;
     }
-    // Build graph for a track: MediaElementSource -> Gain -> destination
+    // Ensure we have a MediaElementSource and GainNode for a track
     function ensureGraph(name){
-      const audioEl = aud(name);
+      const a = aud(name);
       const ac = ensureAC();
-      if(!audioEl || !ac) return null;
+      if(!a || !ac) return null;
       if(!SOURCES[name]){
-        SOURCES[name] = ac.createMediaElementSource(audioEl);
+        SOURCES[name] = ac.createMediaElementSource(a);
         GAINS[name]   = ac.createGain();
         SOURCES[name].connect(GAINS[name]).connect(ac.destination);
       }
       return GAINS[name];
     }
-
+    // Determine if any active track is currently playing
     function anyPlaying(){
-      for(const name of ACTIVE){
-        const a = aud(name);
-        if(a && !a.paused) return true;
-      }
+      for(const n of ACTIVE){ const a = aud(n); if(a && !a.paused) return true; }
       return false;
     }
-    function setIcon(){
+    // Update play/pause icon based on playing state
+    function updateIcon(){
       if(!PLAY) return;
       PLAY.textContent = anyPlaying() ? '⏸' : '▶';
     }
-    function center(volumePopover){
-      if(!volumePopover) return;
-      volumePopover.style.left = '50%';
-      volumePopover.style.transform = 'translateX(-50%)';
+    // Center a volume slider above its button
+    function center(volEl){
+      if(volEl){ volEl.style.left='50%'; volEl.style.transform='translateX(-50%)'; }
     }
-
+    // Deactivate a track: stop audio, reset button and hide slider
     function deactivate(name){
-      const a = aud(name);
-      const b = btn(name);
-      const v = vol(name);
-      if(a){ try{ a.pause(); a.currentTime = 0; }catch(e){} }
+      const a = aud(name), b = btn(name), v = vol(name);
+      if(a){ try{ a.pause(); a.currentTime=0; }catch{} }
       ACTIVE.delete(name);
       if(b){ b.textContent = '🌱'; b.classList.remove('active'); }
       if(v){ v.classList.remove('visible'); }
     }
-
+    // Activate a track: start audio if unlocked, update button, show slider
     function activate(name){
-      const info = TRACKS[name];
-      if(!info) return;
-      // For melodic tracks, stop any other melodic track
+      const info = TRACKS[name]; if(!info) return;
+      // Stop other melodic tracks
       if(info.group === 'melodic'){
-        ACTIVE.forEach(other => {
-          if(TRACKS[other].group === 'melodic' && other !== name){ deactivate(other); }
+        [...ACTIVE].forEach(other => {
+          if(TRACKS[other].group === 'melodic' && other !== name) deactivate(other);
         });
       }
-      const a = aud(name);
-      const b = btn(name);
-      const v = vol(name);
+      const a = aud(name), b = btn(name), v = vol(name);
       const g = ensureGraph(name);
-      if(g){
-        const ac = ensureAC();
-        if(ac && ac.state === 'suspended'){ ac.resume().catch(()=>{}); }
-      }
+      if(g){ try{ ensureAC()?.resume(); }catch{} }
       ACTIVE.add(name);
-      if(a){
-        a.loop = (name === 'storm');
-        if(unlocked){ try{ a.play().catch(()=>{}); }catch(e){} }
-      }
+      if(a){ a.loop = (name === 'storm'); if(unlocked){ a.play().catch(() => {}); } }
       if(b){ b.textContent = info.on; b.classList.add('active'); }
       if(v){ center(v); v.classList.add('visible'); }
-      setIcon();
+      updateIcon();
     }
-
+    // Begin storm track only
     function startStormOnly(){
-      Object.keys(TRACKS).forEach(name => deactivate(name));
+      Object.keys(TRACKS).forEach(deactivate);
       activate('storm');
     }
-
+    // Initialize volume sliders, using WebAudio gain nodes; default to 0.75 unless a valid saved value exists
     function initVolumes(){
-      if(!DOCK) return;
-      const wrappers = DOCK.querySelectorAll('.ad-vol');
-      wrappers.forEach(wrap => {
+      DOCK?.querySelectorAll('.ad-vol').forEach(wrap => {
         const name = wrap.getAttribute('data-for');
         const a    = aud(name);
         const r    = wrap.querySelector('input[type="range"]');
         if(!a || !r) return;
         const g = ensureGraph(name);
-        let value = 0.75;
+        let val = 0.75;
         try{
           const saved = localStorage.getItem('advol_'+name);
-          if(saved !== null){
-            const p = parseFloat(saved);
-            if(!isNaN(p) && p > 0 && p <= 1) value = p;
-          }
-        }catch(e){}
-        if(g){ g.gain.value = value; a.volume = 1; } else { a.volume = value; }
-        r.value = String(value);
-        function onChange(){
-          const nv = Math.max(0, Math.min(1, parseFloat(r.value) || 0));
-          if(g){ g.gain.value = nv; const ac = ensureAC(); if(ac && ac.state === 'suspended'){ ac.resume().catch(()=>{}); } }
-          else { a.volume = nv; }
-          try{ localStorage.setItem('advol_'+name, nv); }catch(e){}
-        }
-        r.addEventListener('input', onChange);
-        r.addEventListener('change', onChange);
-        // unlock if first interaction is slider
-        wrap.addEventListener('pointerdown', function(){ if(!unlocked) unlock(); }, { once: true });
+          if(saved !== null){ const p = parseFloat(saved); if(!isNaN(p) && p > 0 && p <= 1) val = p; }
+        }catch{}
+        if(g){ g.gain.value = val; a.volume = 1; } else { a.volume = val; }
+        r.value = String(val);
+        const on = () => {
+          const nv = Math.max(0, Math.min(1, parseFloat(r.value)||0));
+          if(g){ g.gain.value = nv; try{ ensureAC()?.resume(); }catch{} } else { a.volume = nv; }
+          try{ localStorage.setItem('advol_'+name, nv); }catch{}
+        };
+        r.addEventListener('input', on, {passive:true});
+        r.addEventListener('change', on, {passive:true});
+        // Also unlock if slider is touched first
+        wrap.addEventListener('pointerdown', () => { if(!unlocked) unlock(); }, {once:true, passive:true});
       });
     }
-
-    // Unlock on first interaction: prime audio muted then start Storm
-    function unlock(){
-      if(unlocked) return;
-      const ac = ensureAC();
+    // Unlock the audio context: silently prime each audio, then mark unlocked and start storm
+    function unlock(){ if(unlocked) return;
+const ac = ensureAC();
       Object.keys(TRACKS).forEach(name => {
         const a = aud(name);
         if(!a) return;
         ensureGraph(name);
         const prev = a.volume;
         a.muted = true;
-        let p;
-        try{ p = a.play(); }catch(e){ p = null; }
-        if(p && typeof p.then === 'function'){
-          p.then(() => {
-            a.pause(); a.currentTime = 0; a.muted = false; a.volume = prev;
-          }).catch(() => {
-            a.muted = false; a.volume = prev;
-          });
-        } else {
-          a.muted = false; a.volume = prev;
-        }
+        const p = a.play();
+        (p && p.then ? p : Promise.resolve()).then(() => {
+          a.pause(); a.currentTime = 0; a.muted = false; a.volume = prev;
+        }).catch(() => { a.muted = false; a.volume = prev; });
       });
-      if(ac && ac.state === 'suspended'){ try{ ac.resume(); }catch(e){} }
+      try{ ac && ac.resume(); }catch{}
       unlocked = true;
-      startStormOnly();
+
+
+      // Force Storm to start at 75% volume on first gesture
+      try {
+        const stormGain = GAINS['storm'] || ensureGraph('storm');
+        const stormAudio = aud('storm');
+        if (stormGain) { stormGain.gain.value = 0.75; }
+        if (stormAudio) { stormAudio.volume = 1; /* using GainNode for level */ }
+        try { localStorage.setItem('advol_storm', '0.75'); } catch(e){}
+      } catch(e) {}
+      // Activate only Storm
+      activate('storm');
+    
       initVolumes();
       document.removeEventListener('pointerdown', unlock, true);
     }
-
+    // Event bindings
     function bind(){
-      if(!DOCK) return;
-      const buttons = DOCK.querySelectorAll('.ad-btn');
-      buttons.forEach(b => {
-        b.addEventListener('click', function(){
-          const n = b.getAttribute('data-track');
-          if(ACTIVE.has(n)) deactivate(n);
-          else activate(n);
-        });
+      // Track buttons
+      DOCK?.querySelectorAll('.ad-btn').forEach(b => {
+        b.addEventListener('click', () => {
+          const name = b.getAttribute('data-track');
+          if(ACTIVE.has(name)) deactivate(name); else activate(name);
+        }, {passive:true});
       });
-      if(TOGGLE){
-        TOGGLE.addEventListener('click', function(){
-          unlock();
-          DOCK.classList.toggle('collapsed');
-          if(!DOCK.classList.contains('collapsed')){
-            ACTIVE.forEach(name => {
-              const v = vol(name);
-              if(v){ center(v); v.classList.add('visible'); }
-            });
-          }
-        });
-      }
-      if(PLAY){
-        PLAY.addEventListener('click', function(){
-          if(!unlocked){ unlock(); return; }
-          if(anyPlaying()){
-            ACTIVE.forEach(name => {
-              const a = aud(name);
-              if(a){ try{ a.pause(); }catch(e){} }
-            });
+      // Toggle expand/collapse
+      TOGGLE?.addEventListener('click', () => {
+        unlock();
+        DOCK.classList.toggle('collapsed');
+        if(!DOCK.classList.contains('collapsed')){
+          ACTIVE.forEach(n => { const v = vol(n); if(v){ center(v); v.classList.add('visible'); } });
+        }
+      }, {passive:true});
+      // Play/Pause control
+      PLAY?.addEventListener('click', () => {
+        if(!unlocked){ unlock(); return; }
+        if(anyPlaying()){
+          ACTIVE.forEach(n => { const a = aud(n); if(a) try{ a.pause(); }catch{} });
+        } else {
+          if(ACTIVE.size){
+            ACTIVE.forEach(n => { const a = aud(n); if(a) a.play().catch(() => {}); });
           } else {
-            if(ACTIVE.size){
-              ACTIVE.forEach(name => {
-                const a = aud(name);
-                if(a){ try{ a.play().catch(()=>{}); }catch(e){} }
-              });
-            } else {
-              startStormOnly();
-            }
+            startStormOnly();
           }
-          setIcon();
-        });
-      }
+        }
+        updateIcon();
+      }, {passive:true});
+      // Unlock on first pointer anywhere
       document.addEventListener('pointerdown', unlock, true);
     }
-
-    // Preselect Storm visually (don't play until unlocked)
+    // Preselect storm visually (without starting audio) so its slider shows when expanded
     (function preselect(){
       ACTIVE.clear(); ACTIVE.add('storm');
-      const b = btn('storm');
-      const v = vol('storm');
+      const b = btn('storm'), v = vol('storm');
       if(b){ b.textContent = TRACKS.storm.on; b.classList.add('active'); }
       if(v){ center(v); v.classList.add('visible'); }
     })();
-
     initVolumes();
     bind();
-    setIcon();
+    updateIcon();
   })();
   </script>
 

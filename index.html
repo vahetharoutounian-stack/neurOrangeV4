@@ -184,7 +184,9 @@
 #audioDock{
   position:fixed;
   left:calc(8px + env(safe-area-inset-left));
-  bottom:calc(8px + env(safe-area-inset-bottom));
+  /* Position the dock above the global navigation bar.  Reserve extra space equal
+     to the nav height (approx. 70px) plus the original 8px margin. */
+  bottom:calc(70px + 8px + env(safe-area-inset-bottom));
   z-index:2147483647;
   display:flex; align-items:center; gap:6px;
   padding:6px 8px; border-radius:999px;
@@ -193,11 +195,16 @@
   border:1px solid rgba(0,0,0,.35);
   -webkit-user-select:none; user-select:none;
 
-  /* Shrink the entire audio dock by 20% so it takes up less space while keeping
-     its relative proportions.  Anchor the scaling to the bottom-left corner so
-     it stays aligned with the bottom edge. */
-  transform:scale(0.8);
-  transform-origin:left bottom;
+  /* Shrink the dock by 20% for a more compact presence.  Anchor the scale to the
+     bottom-left corner so the dock remains aligned with the screen edge.  Scaling
+     this container scales its contents proportionally without additional size
+     adjustments. */
+  /* Shrink the dock to 80% of its original size.  Use !important to ensure this
+     scaling takes effect even if other scripts modify the transform property.
+     Anchor the scale to the bottom-left corner so the dock remains aligned
+     with the screen edge. */
+  transform: scale(0.8) !important;
+  transform-origin: left bottom;
 }
 ;#audioDock button{
   background:transparent; border:0; color:#fff;
@@ -229,6 +236,68 @@
     .mini-box .btn.mini:active{transform:translateY(1px)}
     
 </style>
+
+  <!-- Bottom navigation bar styling for Step pages -->
+  <style id="step-nav-styles">
+    /* NeurOrange Step pages bottom nav */
+    #stepNav {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      /* Offset the navigation upward so it sits above the audio dock.  Reserve
+         roughly 70px (approx. audio dock height) plus a 10px margin above
+         the device safe area. */
+      bottom: calc(70px + 10px + env(safe-area-inset-bottom));
+      z-index: 2147483000;
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: auto;
+      background: transparent;
+    }
+    .step-btn {
+      flex: 1 1 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      font-weight: 800;
+      text-decoration: none;
+      color: #2b1600;
+      text-shadow: 0 1px 0 rgba(255,255,255,.35);
+      border: 1px solid rgba(0,0,0,.35);
+      box-shadow: 0 6px 16px rgba(0,0,0,.35),
+        inset 0 2px 0 rgba(255,255,255,.4),
+        inset 0 -2px 0 rgba(0,0,0,.18);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+    .step-btn:active {
+      transform: translateY(1px);
+    }
+    /* Assign distinct gradient backgrounds to each button */
+    #stepNav .step-btn:nth-child(1) {
+      /* Orchard: pure orange gradient */
+      background: linear-gradient(180deg, #FFC966 0%, #FFA500 35%, #CC8400 100%);
+    }
+    #stepNav .step-btn:nth-child(2) {
+      /* Home: firefox orange gradient */
+      background: linear-gradient(180deg, #FE9666 0%, #FE5000 35%, #CB4000 100%);
+    }
+    #stepNav .step-btn:nth-child(3) {
+      /* Art Gallery: afterimage orange gradient */
+      background: linear-gradient(180deg, #FBAC78 0%, #F9751F 35%, #C75D18 100%);
+    }
+    /* Ensure page content isn’t obscured by the nav */
+    .step-padBottom {
+      padding-bottom: 96px;
+    }
+  </style>
 
 <style id="injected-swatches-poem">
 /* === Page 2: swatch visual updates to match reference === */
@@ -400,7 +469,9 @@
     #audioDock2{
       position:fixed;
       left:calc(8px + env(safe-area-inset-left));
-      bottom:calc(8px + env(safe-area-inset-bottom));
+      /* Position the dock above the global navigation bar.  Reserve extra space
+         equal to the nav height (approx. 70px) plus the original 8px margin. */
+      bottom:calc(70px + 8px + env(safe-area-inset-bottom));
       z-index:2147483647;
       display:flex;
       align-items:center;
@@ -413,11 +484,14 @@
       -webkit-user-select:none;
       user-select:none;
 
-  /* Shrink the entire audio dock (modern variant) by 20% so it takes up less space while
-     keeping its relative proportions.  Anchor the scaling to the bottom-left corner so
-     it stays aligned with the bottom edge. */
-  transform:scale(0.8);
-  transform-origin:left bottom;
+      /* Shrink the entire audio dock by 20% to reduce its footprint on mobile screens.
+         Use !important to ensure scaling persists even if scripts manipulate the
+         transform property.  Anchor the scale to the left-bottom corner so the dock
+         remains aligned with the bottom-left of the viewport.  Scaling via
+         transform ensures that all child elements scale proportionally without
+         adjusting individual sizes. */
+      transform: scale(0.8) !important;
+      transform-origin: left bottom;
     }
     /* Hide track buttons and sliders when collapsed */
     #audioDock2.collapsed .ad-wrap{
@@ -430,9 +504,12 @@
     .ad-toggle,
     .ad-play,
     .ad-btn{
-      width:42px;
-      height:42px;
-      min-width:42px;
+      /* Reduce button sizes by 20%.  The original size was 42px; setting
+         width and height to 34px (rounded from 33.6px) maintains the same
+         aspect ratio while making the controls more compact. */
+      width:34px !important;
+      height:34px !important;
+      min-width:34px !important;
       border-radius:50%;
       display:inline-flex;
       align-items:center;
@@ -587,12 +664,14 @@
 </div>
 
 <!-- Persistent audio player (Nickelodeon orange) anchored bottom-left. Each track toggles between a sprout emoji and its playing icon. A vertical volume slider appears while active. -->
-<div id="audioDock2" role="group" aria-label="Audio Player" class="collapsed">
-  <button class="ad-toggle" id="adToggle" title="Expand/Collapse">🟠</button>
-  <button class="ad-play"   id="adPlay"   title="Play/Pause">▶</button>
+<!-- Inline style ensures the dock is scaled down by 20% and anchored to the bottom-left.
+     This overrides any conflicting styles set via CSS or JavaScript -->
+<div id="audioDock2" role="group" aria-label="Audio Player" class="collapsed" style="transform:scale(0.8);transform-origin:left bottom;">
+  <button class="ad-toggle" id="adToggle" title="Expand/Collapse" style="width:34px;height:34px;min-width:34px;">🟠</button>
+  <button class="ad-play"   id="adPlay"   title="Play/Pause"   style="width:34px;height:34px;min-width:34px;">▶</button>
   <!-- Track 1: Sparkle ✨ -->
   <div class="ad-wrap">
-    <button class="ad-btn" data-track="sparkle" title="Sparkle ✨">🌱</button>
+    <button class="ad-btn" data-track="sparkle" title="Sparkle ✨" style="width:34px;height:34px;min-width:34px;">🌱</button>
     <div class="ad-vol" data-for="sparkle">
       <label>✨</label>
       <input type="range" min="0" max="1" step="0.01" value="0.75"/>
@@ -600,7 +679,7 @@
   </div>
   <!-- Track 2: Orange 🍊 -->
   <div class="ad-wrap">
-    <button class="ad-btn" data-track="orange" title="Orange 🍊">🌱</button>
+    <button class="ad-btn" data-track="orange" title="Orange 🍊" style="width:34px;height:34px;min-width:34px;">🌱</button>
     <div class="ad-vol" data-for="orange">
       <label>🍊</label>
       <input type="range" min="0" max="1" step="0.01" value="0.75"/>
@@ -608,7 +687,7 @@
   </div>
   <!-- Track 3: Autumn 🍂 -->
   <div class="ad-wrap">
-    <button class="ad-btn" data-track="autumn" title="Autumn 🍂">🌱</button>
+    <button class="ad-btn" data-track="autumn" title="Autumn 🍂" style="width:34px;height:34px;min-width:34px;">🌱</button>
     <div class="ad-vol" data-for="autumn">
       <label>🍂</label>
       <input type="range" min="0" max="1" step="0.01" value="0.75"/>
@@ -616,7 +695,7 @@
   </div>
   <!-- Track 4: Storm ⛈️ -->
   <div class="ad-wrap">
-    <button class="ad-btn" data-track="storm" title="Storm ⛈️">🌱</button>
+    <button class="ad-btn" data-track="storm" title="Storm ⛈️" style="width:34px;height:34px;min-width:34px;">🌱</button>
     <div class="ad-vol" data-for="storm">
       <label>⛈️</label>
       <input type="range" min="0" max="1" step="0.01" value="0.75"/>
@@ -779,6 +858,12 @@
     <div class="bottomBar">
       <button id="btnBackBottom" class="btn">Back</button>
       <button id="btnNextBottom" class="btn">Next</button>
+    </div>
+    <!-- Inline navigation for Step 2: orchard / home / art gallery -->
+    <div class="multiNav">
+      <a class="multi-btn multi-orchard" href="https://vahetharoutounian-stack.github.io/neurOrangeV4/" target="_self" rel="noopener">Orchard</a>
+      <a class="multi-btn multi-home" href="https://vahetharoutounian-stack.github.io/neurOrange/" target="_self" rel="noopener">Home</a>
+      <a class="multi-btn multi-gallery" href="https://vahetharoutounian-stack.github.io/neurOrangeV2/" target="_self" rel="noopener">Art Gallery</a>
     </div>
   </div>
 </section>
@@ -2544,5 +2629,15 @@ drawPreview();
   })();
   </script>
 
+  <!-- Step pages bottom navigation bar -->
+  <nav id="stepNav" aria-label="Step navigation">
+    <a class="step-btn" href="https://vahetharoutounian-stack.github.io/neurOrangeV4/" target="_self" rel="noopener">Orchard</a>
+    <a class="step-btn" href="https://vahetharoutounian-stack.github.io/neurOrange/" target="_self" rel="noopener">Home</a>
+    <a class="step-btn" href="https://vahetharoutounian-stack.github.io/neurOrangeV2/" target="_self" rel="noopener">Art Gallery</a>
+  </nav>
+  <script>
+    // Add bottom padding so page content remains visible above the nav
+    (function(){ document.body.classList.add('step-padBottom'); })();
+  </script>
 </body>
 </html>

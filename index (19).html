@@ -1,0 +1,185 @@
+<script>
+/* Audio dock — WebAudio gain sliders (iOS-safe), Storm-only autoplay */
+
+(function(){
+  // Track metadata: Storm = ambient (can layer), others = melodic (exclusive)
+  const TRACKS = {
+    sparkle:{ on:'✨', el:'aud_sparkle', group:'melodic' },
+    orange: { on:'🍊', el:'aud_orange',  group:'melodic' },
+    autumn: { on:'🍂', el:'aud_autumn',  group:'melodic' },
+    storm:  { on:'⏱️⛈️'.slice(2), el:'aud_storm',   group:'ambient' } // ⛈️
+  };
+
+  const DOCK   = document.getElementById('audioDock2');
+  const TOGGLE = document.getElementById('adToggle');
+  const PLAY   = document.getElementById('adPlay');
+  const ACTIVE = new Set();
+
+  // WebAudio bits
+  let AC = null;                               // AudioContext
+  const SOURCES = Object.create(null);         // name -> MediaElementSource
+  const GAINS   = Object.create(null);         // name -> GainNode
+  let unlocked  = false;
+
+  const btn = n => DOCK?.querySelector(`.ad-btn[data-track="${n}"]`);
+  const vol = n => DOCK?.querySelector(`.ad-vol[data-for="${n}"]`);
+  const aud = n => document.getElementById(TRACKS[n].el);
+
+  function ensureAC(){
+    if (AC) return AC;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    AC = new Ctx();
+    return AC;
+  }
+  function ensureGraph(name){
+    const a = aud(name);
+    const ac = ensureAC();
+    if (!a || !ac) return null;
+    if (!SOURCES[name]){
+      SOURCES[name] = ac.createMediaElementSource(a);
+      GAINS[name]   = ac.createGain();
+      SOURCES[name].connect(GAINS[name]).connect(ac.destination);
+    }
+    return GAINS[name];
+  }
+
+  function anyPlaying(){
+    for (const n of ACTIVE){ const a = aud(n); if (a && !a.paused) return true; }
+    return false;
+  }
+  function setIcon(){ if (PLAY) PLAY.textContent = anyPlaying() ? '⏸' : '▶'; }
+  function center(v){ if(v){ v.style.left='50%'; v.style.transform='translateX(-50%)'; } }
+
+  function deactivate(name){
+    const a = aud(name), b = btn(name), v = vol(name);
+    if (a){ try{ a.pause(); a.currentTime = 0; }catch{} }
+    ACTIVE.delete(name);
+    if (b){ b.textContent = '🌱'; b.classList.remove('active'); }
+    if (v){ v.classList.remove('visible'); }
+  }
+
+  function activate(name){
+    const info = TRACKS[name]; if (!info) return;
+    if (info.group === 'melodic'){
+      [...ACTIVE].forEach(other=>{
+        if (TRACKS[other].group === 'melodic' && other !== name) deactivate(other);
+      });
+    }
+    const a = aud(name), b = btn(name), v = vol(name);
+    const g = ensureGraph(name);
+    if (g){ try{ ensureAC().resume(); }catch{} }
+    ACTIVE.add(name);
+    // Only start playback if we’re already unlocked (iOS policy)
+    if (a){
+      a.loop = (name === 'storm');
+      if (unlocked) a.play().catch(()=>{});
+    }
+    if (b){ b.textContent = info.on; b.classList.add('active'); }
+    if (v){ center(v); v.classList.add('visible'); }
+    setIcon();
+  }
+
+  function startStormOnly(){ Object.keys(TRACKS).forEach(deactivate); activate('storm'); }
+
+  function initVolumes(){
+    DOCK?.querySelectorAll('.ad-vol').forEach(w=>{
+      const name = w.getAttribute('data-for');
+      const a    = aud(name);
+      const r    = w.querySelector('input[type="range"]');
+      if (!a || !r) return;
+
+      const g = ensureGraph(name);
+      // Default 0.75; ignore stale zero from storage
+      let v = 0.75;
+      try{
+        const saved = localStorage.getItem('advol_'+name);
+        if (saved !== null){
+          const p = parseFloat(saved);
+          if (!isNaN(p) && p > 0 && p <= 1) v = p;
+        }
+      }catch{}
+
+      if (g){ g.gain.value = v; a.volume = 1; } else { a.volume = v; }
+      r.value = String(v);
+
+      const on = ()=>{
+        const nv = Math.max(0, Math.min(1, parseFloat(r.value)||0));
+        if (g){
+          g.gain.value = nv;
+          // iOS sometimes suspends the context; resume on slider move
+          try{ ensureAC()?.resume(); }catch{}
+        } else {
+          a.volume = nv;
+        }
+        try{ localStorage.setItem('advol_'+name, nv); }catch{}
+      };
+      r.addEventListener('input',  on, {passive:true});
+      r.addEventListener('change', on, {passive:true});
+      // Also unlock on first interaction with the slider wrapper
+      w.addEventListener('pointerdown', ()=>{ if(!unlocked) unlock(); }, {once:true, passive:true});
+    });
+  }
+
+  function unlock(){
+    if (unlocked) return;
+    const ac = ensureAC();
+
+    // Prime each <audio> muted so iOS allows future play
+    Object.keys(TRACKS).forEach(name=>{
+      const a = aud(name); if (!a) return;
+      ensureGraph(name);
+      const prev = a.volume;
+      a.muted = true;
+      const p = a.play();
+      (p && p.then ? p : Promise.resolve()).then(()=>{
+        a.pause(); a.currentTime = 0; a.muted = false; a.volume = prev;
+      }).catch(()=>{ a.muted=false; a.volume=prev; });
+    });
+
+    try{ ac && ac.resume(); }catch{}
+    unlocked = true;             // mark first so activate() will play
+    startStormOnly();            // begin Storm immediately after unlock
+    initVolumes();               // reapply volume -> gain graph
+    document.removeEventListener('pointerdown', unlock, true);
+  }
+
+  function bind(){
+    DOCK?.querySelectorAll('.ad-btn').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        const n = b.getAttribute('data-track');
+        if (ACTIVE.has(n)) deactivate(n); else activate(n);
+      }, {passive:true});
+    });
+    TOGGLE?.addEventListener('click', ()=>{
+      unlock();
+      DOCK.classList.toggle('collapsed');
+      if (!DOCK.classList.contains('collapsed')){
+        ACTIVE.forEach(n=>{ const v = vol(n); if(v){ center(v); v.classList.add('visible'); } });
+      }
+    }, {passive:true});
+    PLAY?.addEventListener('click', ()=>{
+      if (!unlocked){ unlock(); return; }
+      if (anyPlaying()){
+        ACTIVE.forEach(n=>{ const a=aud(n); if(a) try{ a.pause(); }catch{} });
+      } else {
+        if (ACTIVE.size) ACTIVE.forEach(n=>{ const a=aud(n); if(a) a.play().catch(()=>{}); });
+        else startStormOnly();
+      }
+      setIcon();
+    }, {passive:true});
+
+    // First gesture unlock (anywhere on page)
+    document.addEventListener('pointerdown', unlock, true);
+  }
+
+  initVolumes();
+  // Preselect Storm visually so its slider shows when you expand
+  (function preselect(){ ACTIVE.clear(); ACTIVE.add('storm'); const b=btn('storm'), v=vol('storm'); if(b){ b.textContent = TRACKS.storm.on; b.classList.add('active'); } if(v){ center(v); v.classList.add('visible'); } })();
+  bind();
+  setIcon();
+
+  // Optional: quick debug
+  window.__neurOrangeAudio = {AC, GAINS, SOURCES, ACTIVE};
+})();
+</script>
